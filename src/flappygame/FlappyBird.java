@@ -1,110 +1,108 @@
 package flappygame;
 
-import javax.swing.*;      // GUI elements ke liye (JFrame, JPanel, JOptionPane etc.)
-import java.awt.*;         // Drawing aur colors ke liye (Graphics, Color, Font etc.)
-import java.awt.event.*;   // Keyboard aur Timer events handle karne ke liye
-import java.util.ArrayList; // Pipes ko list me store karne ke liye
-import java.util.Random;   // Pipes ki random height banane ke liye
+import javax.swing.*;      //gui elements ke liye    jframe,jpanel,joptinpane wagera..
+import java.awt.*;         //drawing aur colors ke liye    graphics,color,font wagera wagera
+import java.awt.event.*;   //keyboard aur timer events handle karne ke liye
+import java.util.ArrayList; //pipes ko list me store karne ke liye
+import java.util.Random;   //pipes ki random height banane ke liye
 
-public class FlappyBird extends JPanel implements ActionListener, KeyListener {
+public class FlappyBird extends JPanel implements ActionListener,KeyListener{
 
-    //  Game board ka size 
-    int boardwidth = 360;    // Screen ki width
-    int boardheight = 640;   // Screen ki height
-    //  Game me use hone wali images (graphics) 
+    //game board ka size 
+    int boardwidth=360;    //screen ki width
+    int boardheight=640;   //screen ki height
+    //  game me use hone wali images,   graphics
     Image backgroundimg,birdimg,toppipeimg,bottompipeimg;
 
-    //  Bird ki starting position aur size 
-    int birdx = boardwidth / 8;     // Bird ka X position
-    int birdy = boardheight / 2;    // Bird ka Y position
-    int birdwidth = 34;             // Bird ki width
-    int birdheight = 24;            // Bird ki height
+    //bird ki starting position aur size 
+    int birdx=boardwidth/8;     //bird ka x position
+    int birdy=boardheight/2;    //bird ka y position
+    int birdwidth=34;             //bird ki width
+    int birdheight=24;            //bird ki height
 
-//  Bird class jo bird ki position, size, aur image store karti hai 
-class Bird {
-        int x = birdx;       // X position
-        int y = birdy;       // Y position
-        int width = birdwidth;   // Width
-        int height = birdheight; // Height
-        Image img;               // Bird ki image
+//bird class jo bird ki position, size, aur image store karti hai 
+class Bird{
+        int x=birdx;       //x position
+        int y=birdy;       //y position
+        int width=birdwidth;   //width
+        int height=birdheight; //height
+        Image img;               //bird ki image
         
-        Bird(Image img) {
-            this.img = img;     // Constructor me image assign kar rahe hain
+        Bird(Image img){
+            this.img=img;     //constructor me image assign kar rahe hain
         }
 }
+    //pipe ki width aur height, aur opening gap 
+    int pipewidth=64;         //pipe ki width
+    int pipeheight=512;       //pipe ki height
+    final int openingspace=boardheight/4; //gap jo upar aur neeche pipe ke darmiyan hota hai
 
-    //  Pipe ki width aur height, aur opening gap 
-    int pipewidth = 64;         // Pipe ki width
-    int pipeheight = 512;       // Pipe ki height
-    final int openingspace = boardheight / 4; // Gap jo upar aur neeche pipe ke darmiyan hota hai
+//pipe class har pipe ki properties define karti hai 
+class Pipe{
+        int x;                //pipe ka x position
+        int y;                //pipe ka y position
+        int width=pipewidth;
+        int height=pipeheight;
+        Image img;            //pipe ki image
+        boolean passed=false;  //kya bird ne is pipe ko cross kiya?
 
-//  Pipe class har pipe ki properties define karti hai 
-class Pipe {
-        int x;                // Pipe ka X position
-        int y;                // Pipe ka Y position
-        int width = pipewidth;
-        int height = pipeheight;
-        Image img;            // Pipe ki image
-        boolean passed = false;  // Kya bird ne is pipe ko cross kiya?
-
-        Pipe(Image img, int x, int y) {
-            this.img = img;
-            this.x = x;
-            this.y = y;
+        Pipe(Image img,int x,int y){
+            this.img=img;
+            this.x=x;
+            this.y=y;
         }
 }
+    Bird bird;                 //bird object
 
-    Bird bird;                 // Bird object
+    int velocityx;             //pipes ki speed, left move krte hain
+    int basespeed=-4;        //default speed, difficulty k hisab s set hogi
+    int maxspeed=-10;        //max speed, hrdest lvl
+    int velocityy=0;         //bird ki vertical speed
+    int gravity=1;           //neeche girne wali force, gravity
 
-    int velocityx;             // Pipes ki speed (left move karte hain)
-    int basespeed = -4;        // Default speed (difficulty ke hisaab se set hoti hai)
-    int maxspeed = -10;        // Max speed (hardest level)
-    int velocityy = 0;         // Bird ki vertical speed
-    int gravity = 1;           // Neeche girne wali force (gravity)
+    ArrayList<Pipe> pipes;     //pipes ka dynamic list
+    Random random=new Random(); //random height banane ke liye
 
-    ArrayList<Pipe> pipes;     // Pipes ka dynamic list
-    Random random = new Random(); // Random height banane ke liye
+    Timer gameloop;            //main game loop , 60 times per second chalta h
+    Timer placepipetimer;      //har 1.5 second me naye pipes add karta hai
 
-    Timer gameloop;            // Main game loop (60 times per second chalti hai)
-    Timer placepipetimer;      // Har 1.5 second me naye pipes add karta hai
+    boolean gameover=false;      //game over flag
+    boolean gamestarted=false;   //game start hua ya nahi
+    double score=0;              //player ka current score
+    double highscore=0;          //sabse zyada banaya gaya score
 
-    boolean gameover = false;      // Game over flag
-    boolean gamestarted = false;   // Game start hua ya nahi
-    double score = 0;              // Player ka current score
-    double highscore = 0;          // Sabse zyada banaya gaya score
+//constructor,game start hone par sab kuch initialize karta hai 
+FlappyBird(){
+        setPreferredSize(new Dimension(boardwidth,boardheight)); //panel ka size set
+        setFocusable(true);        //keyboard events ka focus milta hai
+        addKeyListener(this);      //key events sunne ke liye
 
-//  Constructor: Game start hone par sab kuch initialize karta hai 
-FlappyBird() {
-        setPreferredSize(new Dimension(boardwidth, boardheight)); // Panel ka size set
-        setFocusable(true);        // Keyboard events ka focus milta hai
-        addKeyListener(this);      // Key events sunne ke liye
+        //images load karna, resources folder se 
+        backgroundimg=new ImageIcon(getClass().getResource("./flappybirdbg.png")).getImage();
+        birdimg=new ImageIcon(getClass().getResource("./flappybird.png")).getImage();
+        toppipeimg=new ImageIcon(getClass().getResource("./toppipe.png")).getImage();
+        bottompipeimg=new ImageIcon(getClass().getResource("./bottompipe.png")).getImage();
 
-        //  Images load karna (resources folder se) 
-        backgroundimg = new ImageIcon(getClass().getResource("./flappybirdbg.png")).getImage();
-        birdimg = new ImageIcon(getClass().getResource("./flappybird.png")).getImage();
-        toppipeimg = new ImageIcon(getClass().getResource("./toppipe.png")).getImage();
-        bottompipeimg = new ImageIcon(getClass().getResource("./bottompipe.png")).getImage();
+        bird=new Bird(birdimg);  //bird ka object banaya
+        pipes=new ArrayList<>(); //pipes ka arraylist banaya
 
-        bird = new Bird(birdimg);  // Bird ka object banaya
-        pipes = new ArrayList<>(); // Pipes ka arraylist banaya
+        //game loop set kiya , 60 fps k lyie 
+        gameloop=new Timer(1000/60,this);
 
-        //  Game loop set kiya (60 FPS ke liye) 
-        gameloop = new Timer(1000 / 60, this);
+        //har 1500ms me naye pipes add karne wala timer 
+        placepipetimer=new Timer(1500,e->placepipes());
 
-        //  Har 1500ms me naye pipes add karne wala timer 
-        placepipetimer = new Timer(1500, e -> placepipes());
-
-        //  Game start hone se pehle difficulty puchhi jaati hai 
+        //game start hone se pehle difficulty pochi jayegi
         choosedifficulty();
 }
 
-//  Difficulty choose karne ka dialog box 
-void choosedifficulty() {
-        String[] options = {"Easy", "Medium", "Hard"};
+//difficulty choose karne ka dialog box function
+void choosedifficulty(){
+        String[] options={"Easy","Medium","Hard"};
         int choice = JOptionPane.showOptionDialog(
                 null,
-                "Select Difficulty:",        // Dialog ka title
-                "Flappy Bird",              // Window ka title
+                "Select Difficulty:",        //dialog ka title
+                "Flappy Bird",              //window ka title
                 JOptionPane.DEFAULT_OPTION,
                 JOptionPane.INFORMATION_MESSAGE,
                 null,
@@ -112,170 +110,167 @@ void choosedifficulty() {
                 options[0]
         );
 
-        //  Speed set karte hain difficulty ke according 
-        switch (choice) {
-            case 0: // Easy
-                basespeed = -3;
-                maxspeed = -6;
+        //speed set karte hain difficulty ke according 
+        switch(choice){
+            case 0: //easy
+                basespeed=-3;
+                maxspeed=-6;
                 break;
-            case 1: // Medium
-                basespeed = -4;
-                maxspeed = -8;
+            case 1: //medium
+                basespeed=-4;
+                maxspeed=-8;
                 break;
-            case 2: // Hard
-                basespeed = -5;
-                maxspeed = -10;
+            case 2: //hard
+                basespeed=-5;
+                maxspeed=-10;
                 break;
             default:
-                basespeed = -4;
-                maxspeed = -8;
+                basespeed=-4;
+                maxspeed=-8;
                 break;
         }
-
-        velocityx = basespeed;  // Pipes ki speed set kar rahe hain
-        gameloop.start();       // Game loop start
-        placepipetimer.start(); // Pipe placement timer start
-        gamestarted = true;
+        velocityx=basespeed;  //pipes ki speed set kar rahe hain
+        gameloop.start();       //game loop start
+        placepipetimer.start(); //pipe placement timer start
+        gamestarted=true;
 }
 
-//  Random height ke sath pipes ko screen pe laana 
-void placepipes() {
-        int minpipetopy = -pipeheight + 100;  // Upar ki pipe ki lowest position
-        int maxpipetopy = -100;               // Upar ki pipe ki highest position
-        int randompipey = minpipetopy + random.nextInt(maxpipetopy - minpipetopy + 1);
+//random height ke sath pipes ko screen pe laana 
+void placepipes(){
+        int minpipetopy=-pipeheight+100;  //upar ki pipe ki lowest position
+        int maxpipetopy=-100;               //upar ki pipe ki highest position
+        int randompipey=minpipetopy+random.nextInt(maxpipetopy-minpipetopy+1);
 
-        //  Dono pipes banate hain (upar aur neeche) 
-        Pipe toppipe = new Pipe(toppipeimg, boardwidth, randompipey);
-        Pipe bottompipe = new Pipe(bottompipeimg, boardwidth, randompipey + pipeheight + openingspace);
+        //dono pipes banate hain , upr aur nchay
+        Pipe toppipe=new Pipe(toppipeimg,boardwidth,randompipey);
+        Pipe bottompipe=new Pipe(bottompipeimg,boardwidth,randompipey+pipeheight+openingspace);
 
         pipes.add(toppipe);
         pipes.add(bottompipe);
 }
 
-//  Screen draw karne ka method (automatically call hota hai) 
-public void paintComponent(Graphics g) {
-        super.paintComponent(g); // Background clear karta hai
-        draw(g);                 // Sab cheezen draw karne ke liye
+//screen draw karne ka method, aueomatic cal hota h
+public void paintComponent(Graphics g){
+        super.paintComponent(g); //background clear karta hai
+        draw(g);                 //sab cheezen draw karne ke liye
 }
 
-//  Game ka main drawing function 
-public void draw(Graphics g) {
-        g.drawImage(backgroundimg, 0, 0, boardwidth, boardheight, null); // Background
-        g.drawImage(bird.img, bird.x, bird.y, bird.width, bird.height, null); // Bird
-
-        for (Pipe pipe : pipes) {
-            g.drawImage(pipe.img, pipe.x, pipe.y, pipe.width, pipe.height, null); // Pipes
+//game ka main drawing function 
+public void draw(Graphics g){
+        g.drawImage(backgroundimg,0,0,boardwidth,boardheight,null); //background
+        g.drawImage(bird.img,bird.x,bird.y,bird.width,bird.height,null); //bird
+    
+        for(Pipe pipe:pipes){
+            g.drawImage(pipe.img, pipe.x, pipe.y, pipe.width, pipe.height, null); //pipes
         }
 
-        //  Score aur high score text 
+        //score aur high score text 
         g.setColor(Color.white);
-        g.setFont(new Font("Arial", Font.BOLD, 32));
-        g.drawString("Score: " + (int) score, 10, 35);
-        g.drawString("High: " + (int) highscore, 200, 35);
+        g.setFont(new Font("Arial",Font.BOLD,32));
+        g.drawString("Score: "+(int)score,10,35);
+        g.drawString("High: "+(int)highscore,200,35);
 
-        //  Agar game over ho jaye to message dikhana 
-        if (gameover) {
-            g.setFont(new Font("Arial", Font.BOLD, 24));
-            g.drawString("Game Over", 100, boardheight / 2);
-            g.setFont(new Font("Arial", Font.PLAIN, 16));
-            g.drawString("Press SPACE to Restart", 80, boardheight / 2 + 40);
+        //agar game over ho jaye to message dikhana 
+        if(gameover){
+            g.setFont(new Font("Arial",Font.BOLD,24));
+            g.drawString("Game Over",100,boardheight/2);
+            g.setFont(new Font("Arial",Font.PLAIN,16));
+            g.drawString("Press SPACE to Restart",80,boardheight/2+40);
         }
 }
 
-//  Har frame pe bird aur pipes ki position update karna 
-public void move() {
-        velocityy += gravity;  // Gravity lagti hai bird pe
-        bird.y += velocityy;   // Bird neeche girta hai
+//har frame pe bird aur pipes ki position update karna 
+public void move(){
+        velocityy+=gravity;  //gravity lagti hai bird pe
+        bird.y+=velocityy;   //bird neeche girta hai
 
-        for (Pipe pipe : pipes) {
-            pipe.x += velocityx; // Pipes left move karti hain
+        for(Pipe pipe:pipes){
+            pipe.x+=velocityx; //pipes left move karti hain
             
-            //  Agar bird ne pipe cross kar li to score badhao 
-            if (!pipe.passed && bird.x > pipe.x + pipe.width) {               
-                score += 0.5;         // Har do pipes cross karne pe 1 point milta hai (0.5 har pipe ka)
-                pipe.passed = true;  // Pipe ko mark karte hain ke ye pass ho chuki hai
+            //agar bird ne pipe cross kar li to score badhao 
+            if(!pipe.passed && bird.x>pipe.x+pipe.width){               
+                score+=0.5;         //har 2 pipes cross karne pe 1 point milta hai (0.5 har pipe ka)
+                pipe.passed=true;  //pipe ko mark karte hain ke ye pass ho chuki hai
 
-                //  Har 10 score pe game ki speed tez ho jati hai 
-                if ((int) score % 10 == 0 && velocityx > maxspeed) {
-                    velocityx -= 1;  // Speed aur tez karte hain (difficulty badhati hai)
+                //gar 10 score pe game ki speed tez ho jati hai 
+                if((int)score % 10==0 && velocityx>maxspeed){
+                    velocityx-=1;  //speed aur tez karte hain , difficukty barhti h
                 }
             }
 
-            //  Bird aur pipe ke darmiyan collision check karte hain 
-            if (collision(bird, pipe)) {
-                gameover = true;   // Agar takra gaya to game over ho jata hai
+            //bird aur pipe ke darmiyan collision check karte hain 
+            if(collision(bird,pipe)){
+                gameover=true;   //agar takra gaya to game over ho jata hai
             }
         }
 
-        //  Agar bird neeche gir jaye ya screen ke bahar chali jaye to game over 
-        if (bird.y > boardheight || bird.y < 0) {
-            gameover = true;
+        //agar bird neeche gir jaye ya screen ke bahar chali jaye to game over 
+        if(bird.y>boardheight || bird.y<0){
+            gameover=true;
         }
 
-        //  Jo pipes screen ke bahar chale jayein, unhe hata do (memory save hoti hai) 
-        pipes.removeIf(pipe -> pipe.x + pipe.width < 0);
+        //jo pipes screen ke bahar chale jayein, unhe hata do, memory save hoti h
+        pipes.removeIf(pipe->pipe.x+pipe.width<0);
 }
 
-//  Collision detection function (bird aur pipe takraye ya nahi) 
-boolean collision(Bird a, Pipe b) {
-        return a.x < b.x + b.width &&       // Bird ka right side pipe ke left side ke andar ho
-               a.x + a.width > b.x &&       // Bird ka left side pipe ke right side ke andar ho
-               a.y < b.y + b.height &&      // Bird ka bottom pipe ke top se takra raha ho
-               a.y + a.height > b.y;        // Bird ka top pipe ke bottom se takra raha ho
+//collision detection function, bird aur pipe takren ya nh
+boolean collision(Bird a,Pipe b){
+        return a.x<b.x+b.width &&       //bird ka right side pipe ke left side ke andar ho
+               a.x+a.width>b.x &&       //bird ka left side pipe ke right side ke andar ho
+               a.y<b.y+b.height &&      //bird ka bottom pipe ke top se takra raha ho
+               a.y+a.height>b.y;        //bird ka top pipe ke bottom se takra raha ho
 }
 
-//  Ye method har frame me call hota hai (60 times/sec) 
+//ye method har frame me call hota hai , 60 time per second
 @Override
-public void actionPerformed(ActionEvent e) {
-        if (gamestarted && !gameover) {
-            move();      // Game ki logic update karo
-            repaint();   // Dubara draw karo
+public void actionPerformed(ActionEvent e){
+        if(gamestarted && !gameover){
+            move();      //game ki logic update karo
+            repaint();   //dubara draw karo
         }
-        
-        if (gameover) {
-            if (score > highscore) {
-                highscore = score; // Naya high score set karna
+        if(gameover){
+            if(score>highscore){
+                highscore=score; //naya high score set krhy
             }
-            gameloop.stop();        // Game loop band karna
-            placepipetimer.stop();  // Pipe ka timer bhi band
+            gameloop.stop();        //game loop band krhy
+            placepipetimer.stop();  //pipe ka timer bhi band
     }
 }
 
-//  Jab SPACE key press ho to bird jump kare ya game reset ho 
+//jab space key press ho to bird jump kare ya game reset ho
 @Override
-public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_SPACE) {
-            velocityy = -9; // Bird jump karega (upar ki taraf move)
+public void keyPressed(KeyEvent e){
+        if(e.getKeyCode()==KeyEvent.VK_SPACE){
+            velocityy=-9; //bird jump karega , upr ki traf move
 
-            if (gameover) {
-                //  Game reset karte hain 
-                bird.x = birdx;
-                bird.y = birdy;
-                velocityy = 0;
-                velocityx = basespeed;
-                pipes.clear();      // Saari purani pipes hata do
-                score = 0;
-                gameover = false;
-                gameloop.start();       // Game loop dobara start
-                placepipetimer.start(); // Pipe wala timer bhi start
+            if(gameover){
+                //game reset karte hain 
+                bird.x=birdx;
+                bird.y=birdy;
+                velocityy=0;
+                velocityx=basespeed;
+                pipes.clear();      //saari purani pipes hata do
+                score=0;
+                gameover=false;
+                gameloop.start();       //game loop dobara start
+                placepipetimer.start(); //pipe wala timer bhi start
         }
     }
 }
+//ye 2 methods abhi use nahi ho rahi lekin required hain by interface
+@Override public void keyTyped(KeyEvent e){}
+@Override public void keyReleased(KeyEvent e){}
 
-    //  Ye 2 methods abhi use nahi ho rahi (required by interface) 
-@Override public void keyTyped(KeyEvent e) {}
-@Override public void keyReleased(KeyEvent e) {}
-
-public static void main(String[] args) {
-        JFrame f = new JFrame("Flappy Bird");     // Ek nayi window banao
-        FlappyBird fb = new FlappyBird();     // Game ka object banao
-        f.add(fb);                        // Game panel ko window me add karo
-        f.setSize(fb.boardwidth, fb.boardheight); // Window size set karo
-        f.setLocationRelativeTo(null);            // Window ko screen ke center me lao
-        f.setResizable(false);                    // Window resize na ho
-        f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // Close pe program band ho
-        f.pack();                                 // Auto layout fix karo
-        fb.requestFocus();                    // Game input ka focus le
-        f.setVisible(true);                       // Window show karo
+public static void main(String[] args){
+        JFrame f=new JFrame("Flappy Bird");     // ek nayi window banao
+        FlappyBird fb=new FlappyBird();     // game ka object banao
+        f.add(fb);                        // game panel ko window me add karo
+        f.setSize(fb.boardwidth,fb.boardheight); // window size set karo
+        f.setLocationRelativeTo(null);            // window ko screen ke center me lao
+        f.setResizable(false);                    // window resize na ho
+        f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // close pe program band ho
+        f.pack();                                 // auto layout fix karo
+        fb.requestFocus();                    // game input ka focus le
+        f.setVisible(true);                       // window show karo
     }
 }
