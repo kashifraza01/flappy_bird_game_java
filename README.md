@@ -55,7 +55,7 @@ A classic **Flappy Bird** clone developed in **Java** using **Swing** for GUI, *
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/kashifraza01/Flappy-Bird-Game-Java-OOP-Project/
+git clone https://github.com/kashifraza01/Flappy-Bird-Game-Java-OOP-Project.git
 ```
 
 2. Compile the code:
